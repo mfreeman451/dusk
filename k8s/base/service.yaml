@@ -1,0 +1,16 @@
+# Service for DUSK node
+apiVersion: v1
+kind: Service
+metadata:
+  name: dusk-node
+spec:
+  selector:
+    app: dusk-node
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: api
+    - port: 9000
+      targetPort: 9000
+      name: p2p
+  type: ClusterIP

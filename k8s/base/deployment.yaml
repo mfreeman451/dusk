@@ -1,0 +1,44 @@
+# Deployment for DUSK node
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dusk-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dusk-node
+  template:
+    metadata:
+      labels:
+        app: dusk-node
+    spec:
+      containers:
+        - name: dusk-node
+          image: ubuntu:22.04
+          command: ["/bin/sh"]
+          args: ["/config/setup.sh"]
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+          volumeMounts:
+            - name: dusk-config
+              mountPath: /config
+            - name: dusk-data
+              mountPath: /opt/dusk
+            - name: dusk-logs
+              mountPath: /var/log
+      volumes:
+        - name: dusk-config
+          configMap:
+            name: dusk-node-config
+        - name: dusk-data
+          persistentVolumeClaim:
+            claimName: dusk-node-data
+        - name: dusk-logs
+          emptyDir: {}
+

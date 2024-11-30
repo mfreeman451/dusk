@@ -1,21 +1,23 @@
-FROM alpine:3.19
+FROM ubuntu:22.04
 
-# Install required dependencies
-RUN apk add --no-cache \
-    bash \
+# Prevent apt from prompting for input
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal required dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     openssl \
-    openrc \
-    sudo
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create dusk user and directories
-RUN adduser -D -h /opt/dusk dusk && \
+RUN useradd -m -d /opt/dusk dusk && \
     mkdir -p /opt/dusk/conf /opt/dusk/bin /var/log/dusk && \
     chown -R dusk:dusk /opt/dusk /var/log/dusk
 
 # Configure sudo access for dusk user
-RUN echo "dusk ALL=(ALL) NOPASSWD: /sbin/openrc-run, /usr/sbin/service" > /etc/sudoers.d/dusk && \
+RUN echo "dusk ALL=(ALL) NOPASSWD: /usr/sbin/service" > /etc/sudoers.d/dusk && \
     chmod 0440 /etc/sudoers.d/dusk
 
 # Install Dusk node

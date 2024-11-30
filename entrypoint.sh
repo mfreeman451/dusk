@@ -19,8 +19,8 @@ if [ -f "/config/consensus-password" ]; then
     sh /opt/dusk/bin/setup_consensus_pwd.sh < /config/consensus-password
 fi
 
-# Start Rusk service
-service rusk start
+# Start Rusk service using service command
+sudo service rusk start
 
 # Keep container running and output logs
 exec tail -f /var/log/rusk.log

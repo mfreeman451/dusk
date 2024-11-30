@@ -4,6 +4,8 @@
 
 This may or may not appear in the repository as a file, so it is documented here.
 
+### Declarative
+
 ```yaml
 # Secret for storing sensitive DUSK node data
 apiVersion: v1
@@ -20,6 +22,8 @@ data:
 ```
 
 or
+
+### Imperative
 
 ```shell
 # Create these files first with your actual values

@@ -6,13 +6,17 @@ RUN apk add --no-cache \
     ca-certificates \
     curl \
     openssl \
-    systemd \
+    openrc \
     sudo
 
 # Create dusk user and directories
 RUN adduser -D -h /opt/dusk dusk && \
     mkdir -p /opt/dusk/conf /opt/dusk/bin /var/log/dusk && \
     chown -R dusk:dusk /opt/dusk /var/log/dusk
+
+# Configure sudo access for dusk user
+RUN echo "dusk ALL=(ALL) NOPASSWD: /sbin/openrc-run, /usr/sbin/service" > /etc/sudoers.d/dusk && \
+    chmod 0440 /etc/sudoers.d/dusk
 
 # Install Dusk node
 RUN curl --proto '=https' --tlsv1.2 -sSfL \

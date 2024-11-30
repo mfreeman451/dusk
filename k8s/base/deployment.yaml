@@ -1,4 +1,3 @@
-# Deployment for DUSK node
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,11 +12,15 @@ spec:
       labels:
         app: dusk-node
     spec:
+      securityContext:
+        fsGroup: 10001  # dusk user
       containers:
         - name: dusk-node
-          image: ubuntu:22.04
-          command: ["/bin/sh"]
-          args: ["/config/setup.sh"]
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.1
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: dusk-node-config
           resources:
             requests:
               cpu: "2"
@@ -26,19 +29,19 @@ spec:
               cpu: "4"
               memory: "8Gi"
           volumeMounts:
-            - name: dusk-config
+            - name: dusk-secrets
               mountPath: /config
+              readOnly: true
             - name: dusk-data
               mountPath: /opt/dusk
             - name: dusk-logs
               mountPath: /var/log
       volumes:
-        - name: dusk-config
-          configMap:
-            name: dusk-node-config
+        - name: dusk-secrets
+          secret:
+            secretName: dusk-node-secret
         - name: dusk-data
           persistentVolumeClaim:
             claimName: dusk-node-data
         - name: dusk-logs
           emptyDir: {}
-

@@ -1,34 +1,9 @@
-# ConfigMap for DUSK node configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dusk-node-config
 data:
-  setup.sh: |
-    #!/bin/sh
-    # Install DUSK node
-    curl --proto '=https' --tlsv1.2 -sSfL https://github.com/dusk-network/node-installer/releases/download/v0.3.5/node-installer.sh | sh
-    
-    # Restore wallet if mnemonic exists
-    if [ -f "/config/mnemonic" ]; then
-      echo "Restoring wallet from mnemonic..."
-      cat /config/mnemonic | rusk-wallet restore
-    fi
-    
-    # Export consensus keys
-    if [ -f "/config/wallet-password" ]; then
-      echo "Exporting consensus keys..."
-      cat /config/wallet-password | rusk-wallet export -d /opt/dusk/conf -n consensus.keys
-    fi
-    
-    # Set consensus password
-    if [ -f "/config/consensus-password" ]; then
-      echo "Setting consensus password..."
-      cat /config/consensus-password | sh /opt/dusk/bin/setup_consensus_pwd.sh
-    fi
-    
-    # Start Rusk service
-    service rusk start
-    
-    # Keep container running
-    tail -f /var/log/rusk.log
+  config.env: |
+    # Dusk node configuration
+    DUSK_NETWORK=testnet
+    LOG_LEVEL=debug

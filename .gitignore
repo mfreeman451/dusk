@@ -31,6 +31,9 @@ jwks.json
 *.pem
 *.key
 *.crt
+.cpk
+.keys
+
 .env
 # Logs
 logs

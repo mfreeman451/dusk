@@ -20,11 +20,17 @@ RUN useradd -m -d /opt/dusk dusk && \
 RUN echo "dusk ALL=(ALL) NOPASSWD: /usr/sbin/service" > /etc/sudoers.d/dusk && \
     chmod 0440 /etc/sudoers.d/dusk
 
-# Install Dusk node
+# Install Dusk node and debug installation
 RUN curl --proto '=https' --tlsv1.2 -sSfL \
     https://github.com/dusk-network/node-installer/releases/download/v0.3.5/node-installer.sh \
     -o /tmp/installer.sh && \
-    sh /tmp/installer.sh && \
+    sh -x /tmp/installer.sh && \
+    echo "Checking installed files:" && \
+    ls -la /opt/dusk/bin && \
+    echo "Checking PATH:" && \
+    echo $PATH && \
+    which rusk-wallet || echo "rusk-wallet not found in PATH" && \
+    find / -name rusk-wallet 2>/dev/null || echo "rusk-wallet not found on system" && \
     rm /tmp/installer.sh
 
 # Copy entrypoint script

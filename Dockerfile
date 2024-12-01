@@ -14,15 +14,22 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Clone and build rusk-wallet
-RUN RUSTFLAGS='-C target-cpu=x86-64' \
+WORKDIR /tmp
+RUN git clone https://github.com/dusk-network/rusk.git && \
+    cd rusk && \
+    RUSTFLAGS='-C target-cpu=x86-64' \
     cargo build --release --bin rusk-wallet --target x86_64-unknown-linux-gnu && \
     mv target/x86_64-unknown-linux-gnu/release/rusk-wallet /opt/dusk/bin/ && \
     chmod +x /opt/dusk/bin/rusk-wallet && \
-    rm -rf /tmp/rusk
+    cd .. && \
+    rm -rf rusk
 
 # Create setup_consensus_pwd.sh script
-RUN echo '#!/bin/bash\nread pwd\necho "CONSENSUS_KEYS_PASS=$pwd" > /opt/dusk/services/dusk.conf' > /opt/dusk/bin/setup_consensus_pwd.sh && \
+RUN mkdir -p /opt/dusk/services && \
+    echo '#!/bin/bash\nread pwd\necho "CONSENSUS_KEYS_PASS=$pwd" > /opt/dusk/services/dusk.conf' > /opt/dusk/bin/setup_consensus_pwd.sh && \
     chmod +x /opt/dusk/bin/setup_consensus_pwd.sh
 
 # Switch back to dusk user
 USER 1000:1000
+
+WORKDIR /opt/dusk

@@ -1,4 +1,4 @@
-FROM dusknetwork/node:latest
+FROM --platform=linux/amd64 dusknetwork/node:latest
 
 USER root
 
@@ -14,10 +14,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Clone and build rusk-wallet
-RUN git clone https://github.com/dusk-network/rusk.git /tmp/rusk && \
-    cd /tmp/rusk && \
-    cargo build --release --bin rusk-wallet && \
-    mv target/release/rusk-wallet /opt/dusk/bin/ && \
+RUN RUSTFLAGS='-C target-cpu=x86-64' \
+    cargo build --release --bin rusk-wallet --target x86_64-unknown-linux-gnu && \
+    mv target/x86_64-unknown-linux-gnu/release/rusk-wallet /opt/dusk/bin/ && \
     chmod +x /opt/dusk/bin/rusk-wallet && \
     rm -rf /tmp/rusk
 

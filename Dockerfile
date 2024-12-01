@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Create dusk user and directories
 RUN useradd -m -d /opt/dusk dusk && \
-    mkdir -p /opt/dusk/conf /opt/dusk/bin /var/log/dusk && \
+    mkdir -p /opt/dusk/conf /opt/dusk/bin /opt/dusk/state /opt/dusk/services /var/log/dusk && \
     chown -R dusk:dusk /opt/dusk /var/log/dusk
 
 # Configure sudo access for dusk user
@@ -27,7 +27,28 @@ RUN curl --proto '=https' --tlsv1.2 -sSfL \
     -o /tmp/installer.sh && \
     bash -x /tmp/installer.sh && \
     rm /tmp/installer.sh && \
+    chmod -R 755 /opt/dusk/bin && \
     chown -R dusk:dusk /opt/dusk /var/log/dusk
+
+# Create rusk service file
+RUN echo '[Unit]\n\
+Description=Dusk Network Node\n\
+After=network.target\n\
+\n\
+[Service]\n\
+User=dusk\n\
+Group=dusk\n\
+Type=simple\n\
+Environment="DUSK_CONSENSUS_KEYS_PASS=dummy"\n\
+WorkingDirectory=/opt/dusk\n\
+ExecStart=/opt/dusk/bin/rusk\n\
+Restart=always\n\
+RestartSec=5\n\
+\n\
+[Install]\n\
+WantedBy=multi-user.target' > /opt/dusk/services/rusk.service && \
+    chmod 644 /opt/dusk/services/rusk.service && \
+    chown dusk:dusk /opt/dusk/services/rusk.service
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/
@@ -36,7 +57,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh && \
 
 # Debug info
 RUN ls -la /opt/dusk/bin/ && \
-    ls -la /usr/bin/rusk-wallet && \
+    ls -la /usr/bin/rusk* && \
+    ls -la /opt/dusk/services && \
     echo "PATH=$PATH" && \
     which rusk-wallet
 

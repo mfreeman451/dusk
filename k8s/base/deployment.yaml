@@ -13,9 +13,10 @@ spec:
       labels:
         app: dusk-node
     spec:
+      # Init containers run before the main container
       initContainers:
         - name: setup-dusk
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.3
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.7
           command:
             - sh
             - -c
@@ -23,10 +24,7 @@ spec:
               cp -r /opt/dusk/bin/* /dusk-bin/ && \
               chown -R 1000:1000 /dusk-bin/ && \
               mkdir -p /home/dusk/.dusk/rusk-wallet && \
-              chown -R 1000:1000 /home/dusk/ && \
-              mkdir -p /opt/dusk/services && \
-              cp /opt/dusk/services/rusk.service /etc/systemd/system/ && \
-              chown -R 1000:1000 /opt/dusk/services
+              chown -R 1000:1000 /home/dusk/
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -35,11 +33,10 @@ spec:
               mountPath: /dusk-bin
             - name: dusk-home
               mountPath: /home/dusk
-            - name: systemd
-              mountPath: /etc/systemd/system
+      # Main container
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.3
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.7
           imagePullPolicy: Always
           volumeMounts:
             - name: dusk-bin
@@ -50,8 +47,6 @@ spec:
               mountPath: /opt/dusk/conf
             - name: dusk-home
               mountPath: /home/dusk
-            - name: systemd
-              mountPath: /etc/systemd/system
             - name: secrets
               mountPath: /config
               readOnly: true
@@ -74,8 +69,6 @@ spec:
         - name: dusk-home
           persistentVolumeClaim:
             claimName: dusk-wallet
-        - name: systemd
-          emptyDir: {}
         - name: secrets
           secret:
             secretName: dusk-node-secret

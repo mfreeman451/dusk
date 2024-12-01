@@ -28,12 +28,16 @@ RUN curl --proto '=https' --tlsv1.2 -sSfL \
     sh /tmp/installer.sh && \
     rm /tmp/installer.sh
 
+# Copy binaries to final location and fix permissions
+RUN cp -a /usr/bin/rusk-wallet /opt/dusk/bin/ && \
+    chown -R dusk:dusk /opt/dusk
+
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
     chown dusk:dusk /usr/local/bin/entrypoint.sh
 
-# Verify rusk-wallet installation
+# Debug info
 RUN ls -la /opt/dusk/bin/rusk-wallet && \
     ls -la /usr/bin/rusk-wallet && \
     echo $PATH && \

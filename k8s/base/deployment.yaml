@@ -12,36 +12,28 @@ spec:
       labels:
         app: dusk-node
     spec:
-      securityContext:
-        fsGroup: 10001  # dusk user
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.2
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.4
           imagePullPolicy: Always
-          envFrom:
-            - configMapRef:
-                name: dusk-node-config
-          resources:
-            requests:
-              cpu: "2"
-              memory: "4Gi"
-            limits:
-              cpu: "4"
-              memory: "8Gi"
           volumeMounts:
-            - name: dusk-secrets
+            - name: dusk-bin
+              mountPath: /opt/dusk
+            - name: dusk-config
+              mountPath: /opt/dusk/conf
+            - name: dusk-wallet-secret
               mountPath: /config
               readOnly: true
-            - name: dusk-data
-              mountPath: /opt/dusk
-            - name: dusk-logs
-              mountPath: /var/log
+          env:
+            - name: PATH
+              value: /opt/dusk/bin:/usr/bin:/usr/local/bin:/sbin:/bin
       volumes:
-        - name: dusk-secrets
-          secret:
-            secretName: dusk-node-secret
-        - name: dusk-data
+        - name: dusk-bin
           persistentVolumeClaim:
-            claimName: dusk-node-data
-        - name: dusk-logs
-          emptyDir: {}
+            claimName: dusk-bin-data
+        - name: dusk-config
+          persistentVolumeClaim:
+            claimName: dusk-config
+        - name: dusk-wallet-secret
+          secret:
+            secretName: dusk-wallet-secret

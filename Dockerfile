@@ -40,14 +40,14 @@ WORKDIR /home/dusk
 RUN git clone https://github.com/dusk-network/rusk.git
 
 # Build the node and wallet
+USER root
 RUN cd rusk && \
     make keys && \
     make wasm && \
     cargo build --release -p rusk && \
     cargo build --release -p rusk-wallet
 
-# Switch back to root to move binaries
-USER root
+USER dusk
 
 # Copy the binaries to /opt/dusk/bin
 RUN cp /home/dusk/rusk/target/release/rusk /opt/dusk/bin/ && \

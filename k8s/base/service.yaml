@@ -1,12 +1,18 @@
-# Service for DUSK node
 apiVersion: v1
 kind: Service
 metadata:
   name: dusk-node
   namespace: dusk
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "dusk.tunnel.threadr.ai"
+    metallb.universe.tf/address-pool: k3s-pool
 spec:
-  selector:
-    app: dusk-node
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ipFamilyPolicy: RequireDualStack
+  ipFamilies:
+    - IPv4
+    - IPv6
   ports:
     - port: 8080
       targetPort: 8080
@@ -14,4 +20,5 @@ spec:
     - port: 9000
       targetPort: 9000
       name: p2p
-  type: ClusterIP
+  selector:
+    app: dusk-node

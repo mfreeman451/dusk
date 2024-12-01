@@ -13,40 +13,50 @@ spec:
       labels:
         app: dusk-node
     spec:
-      # Init containers run before the main container
       initContainers:
         - name: setup-dusk
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.3
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.4
           command:
             - sh
             - -c
             - |
+              # Setup binary directory
               cp -r /opt/dusk/bin/* /dusk-bin/ && \
               chown -R 1000:1000 /dusk-bin/ && \
+              
+              # Setup directories and permissions
               mkdir -p /home/dusk/.dusk/rusk-wallet && \
-              chown -R 1000:1000 /home/dusk/
+              mkdir -p /opt/dusk/{conf,state} && \
+              mkdir -p /var/log/dusk && \
+              touch /var/log/rusk.log && \
+              chown -R 1000:1000 /home/dusk/ /opt/dusk /var/log/dusk /var/log/rusk.log && \
+              chmod -R 755 /opt/dusk && \
+              chmod 644 /var/log/rusk.log
           securityContext:
             runAsUser: 0
             runAsGroup: 0
           volumeMounts:
             - name: dusk-bin
               mountPath: /dusk-bin
-            - name: dusk-home
-              mountPath: /home/dusk
-      # Main container
+            - name: dusk-data
+              mountPath: /opt/dusk
+            - name: dusk-wallet
+              mountPath: /home/dusk/.dusk
+            - name: dusk-logs
+              mountPath: /var/log
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.7
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.4
           imagePullPolicy: Always
           volumeMounts:
             - name: dusk-bin
               mountPath: /opt/dusk/bin
-            - name: dusk-state
-              mountPath: /opt/dusk/state
-            - name: dusk-conf
-              mountPath: /opt/dusk/conf
-            - name: dusk-home
-              mountPath: /home/dusk
+            - name: dusk-data
+              mountPath: /opt/dusk
+            - name: dusk-wallet
+              mountPath: /home/dusk/.dusk
+            - name: dusk-logs
+              mountPath: /var/log
             - name: secrets
               mountPath: /config
               readOnly: true
@@ -61,14 +71,14 @@ spec:
       volumes:
         - name: dusk-bin
           emptyDir: {}
-        - name: dusk-state
+        - name: dusk-data
           persistentVolumeClaim:
-            claimName: dusk-state
-        - name: dusk-conf
-          emptyDir: {}
-        - name: dusk-home
+            claimName: dusk-data
+        - name: dusk-wallet
           persistentVolumeClaim:
             claimName: dusk-wallet
+        - name: dusk-logs
+          emptyDir: {}
         - name: secrets
           secret:
             secretName: dusk-node-secret

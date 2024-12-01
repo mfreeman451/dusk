@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: dusk-node-data
+  name: dusk-data    # For blockchain data and state
   namespace: dusk
 spec:
   accessModes:
@@ -14,33 +14,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: dusk-config
-  namespace: dusk
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: local-path
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: dusk-state
-  namespace: dusk
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: local-path
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: dusk-wallet
+  name: dusk-wallet  # For wallet and config files
   namespace: dusk
 spec:
   accessModes:

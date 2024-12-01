@@ -25,10 +25,11 @@ RUN echo "dusk ALL=(ALL) NOPASSWD: /usr/sbin/service" > /etc/sudoers.d/dusk && \
 RUN curl --proto '=https' --tlsv1.2 -sSfL \
     https://github.com/dusk-network/node-installer/releases/download/v0.3.5/node-installer.sh \
     -o /tmp/installer.sh && \
-    bash -x /tmp/installer.sh && \
+    PREFIX=/opt/dusk bash -x /tmp/installer.sh && \
     rm /tmp/installer.sh && \
     chmod -R 755 /opt/dusk/bin && \
     chown -R dusk:dusk /opt/dusk /var/log/dusk
+
 
 # Create rusk service file
 RUN echo '[Unit]\n\

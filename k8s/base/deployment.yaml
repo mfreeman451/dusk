@@ -13,50 +13,20 @@ spec:
       labels:
         app: dusk-node
     spec:
-      initContainers:
-        - name: setup-dusk
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.10
-          command:
-            - sh
-            - -c
-            - |
-              # Setup binary directory
-              cp -r /opt/dusk/bin/* /dusk-bin/ && \
-              chown -R 1000:1000 /dusk-bin/ && \
-              
-              # Setup directories and permissions
-              mkdir -p /home/dusk/.dusk/rusk-wallet && \
-              mkdir -p /opt/dusk/{conf,state} && \
-              mkdir -p /var/log/dusk && \
-              touch /var/log/rusk.log && \
-              chown -R 1000:1000 /home/dusk/ /opt/dusk /var/log/dusk /var/log/rusk.log && \
-              chmod -R 755 /opt/dusk && \
-              chmod 644 /var/log/rusk.log
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-          volumeMounts:
-            - name: dusk-bin
-              mountPath: /dusk-bin
-            - name: dusk-data
-              mountPath: /opt/dusk
-            - name: dusk-wallet
-              mountPath: /home/dusk/.dusk
-            - name: dusk-logs
-              mountPath: /var/log
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.10
+          image: dusknetwork/node:latest
           imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: api
+            - containerPort: 9000
+              name: p2p
           volumeMounts:
-            - name: dusk-bin
-              mountPath: /opt/dusk/bin
             - name: dusk-data
               mountPath: /opt/dusk
             - name: dusk-wallet
               mountPath: /home/dusk/.dusk
-            - name: dusk-logs
-              mountPath: /var/log
             - name: secrets
               mountPath: /config
               readOnly: true
@@ -68,17 +38,15 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
+          command: ["/opt/dusk/bin/rusk"]  # Override the default command
+          args: ["-c", "/opt/dusk/conf/config.toml"]  # Specify the config file
       volumes:
-        - name: dusk-bin
-          emptyDir: {}
         - name: dusk-data
           persistentVolumeClaim:
             claimName: dusk-data
         - name: dusk-wallet
           persistentVolumeClaim:
             claimName: dusk-wallet
-        - name: dusk-logs
-          emptyDir: {}
         - name: secrets
           secret:
             secretName: dusk-node-secret

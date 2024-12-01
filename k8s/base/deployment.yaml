@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
         - name: setup-dusk
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.4
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.9
           command:
             - sh
             - -c
@@ -46,7 +46,7 @@ spec:
               mountPath: /var/log
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.4
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.9
           imagePullPolicy: Always
           volumeMounts:
             - name: dusk-bin

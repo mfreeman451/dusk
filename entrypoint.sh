@@ -15,7 +15,7 @@ echo "USER=$(whoami)"
 echo "Checking rusk-wallet location:"
 which rusk-wallet
 ls -la $(which rusk-wallet)
-ls -la /usr/bin/rusk-wallet
+ls -la /opt/dusk/bin/rusk-wallet
 
 # Setup wallet if mnemonic exists
 if [ -f "/config/mnemonic" ]; then
@@ -47,15 +47,6 @@ if [ -f "/config/consensus-key-password" ]; then
     echo "Consensus password environment variable set successfully"
 fi
 
-# Start Rusk service with systemctl if possible, otherwise direct
-echo "Starting Rusk service..."
-if command -v systemctl >/dev/null 2>&1; then
-    sudo systemctl daemon-reload
-    sudo systemctl start rusk
-else
-    echo "Starting rusk directly..."
-    /opt/dusk/bin/rusk &
-fi
-
-# Keep container running and output logs
-exec tail -f /var/log/rusk.log
+# Start Rusk node
+echo "Starting Rusk node..."
+exec /opt/dusk/bin/rusk

@@ -10,60 +10,73 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     openssl \
     sudo \
-    && rm -rf /var/lib/apt/lists/*
+    unzip \
+    jq \
+    net-tools \
+    dnsutils \
+    ufw \
+    clang \
+    git \
+    build-essential \
+    libssl-dev \
+    pkg-config
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- -y
+
+# Add cargo to PATH
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Create dusk user and directories
 RUN useradd -m -d /opt/dusk dusk && \
     mkdir -p /opt/dusk/conf /opt/dusk/bin /opt/dusk/state /opt/dusk/services /var/log/dusk && \
     chown -R dusk:dusk /opt/dusk /var/log/dusk
 
-# Configure sudo access for dusk user
-RUN echo "dusk ALL=(ALL) NOPASSWD: /usr/sbin/service" > /etc/sudoers.d/dusk && \
-    chmod 0440 /etc/sudoers.d/dusk
+# Switch to dusk user
+USER dusk
+WORKDIR /home/dusk
 
-# Install Dusk node
-RUN curl --proto '=https' --tlsv1.2 -sSfL \
-    https://github.com/dusk-network/node-installer/releases/download/v0.3.5/node-installer.sh \
-    -o /tmp/installer.sh && \
-    PREFIX=/opt/dusk bash -x /tmp/installer.sh && \
-    rm /tmp/installer.sh && \
-    chmod -R 755 /opt/dusk/bin && \
-    chown -R dusk:dusk /opt/dusk /var/log/dusk
+# Clone Rusk repository
+RUN git clone https://github.com/dusk-network/rusk.git
 
+# Build the node and wallet
+RUN cd rusk && \
+    make keys && \
+    make wasm && \
+    cargo build --release -p rusk && \
+    cargo build --release -p rusk-wallet
 
-# Create rusk service file
-RUN echo '[Unit]\n\
-Description=Dusk Network Node\n\
-After=network.target\n\
-\n\
-[Service]\n\
-User=dusk\n\
-Group=dusk\n\
-Type=simple\n\
-Environment="DUSK_CONSENSUS_KEYS_PASS=dummy"\n\
-WorkingDirectory=/opt/dusk\n\
-ExecStart=/opt/dusk/bin/rusk\n\
-Restart=always\n\
-RestartSec=5\n\
-\n\
-[Install]\n\
-WantedBy=multi-user.target' > /opt/dusk/services/rusk.service && \
-    chmod 644 /opt/dusk/services/rusk.service && \
-    chown dusk:dusk /opt/dusk/services/rusk.service
+# Switch back to root to move binaries
+USER root
+
+# Copy the binaries to /opt/dusk/bin
+RUN cp /home/dusk/rusk/target/release/rusk /opt/dusk/bin/ && \
+    cp /home/dusk/rusk/target/release/rusk-wallet /opt/dusk/bin/ && \
+    chown dusk:dusk /opt/dusk/bin/* && \
+    chmod +x /opt/dusk/bin/*
+
+# Copy the installer scripts and configurations
+RUN mkdir -p /opt/dusk/installer && \
+    curl -so /opt/dusk/installer/installer.tar.gz -L "https://github.com/dusk-network/node-installer/archive/refs/tags/v0.3.5.tar.gz" && \
+    tar xf /opt/dusk/installer/installer.tar.gz --strip-components 1 --directory /opt/dusk/installer && \
+    mv -f /opt/dusk/installer/bin/* /opt/dusk/bin/ && \
+    mv /opt/dusk/installer/conf/* /opt/dusk/conf/ && \
+    mv -n /opt/dusk/installer/services/* /opt/dusk/services/ && \
+    mv -f /opt/dusk/conf/wallet.toml /home/dusk/.dusk/rusk-wallet/config.toml && \
+    chown -R dusk:dusk /opt/dusk /home/dusk/.dusk && \
+    chmod +x /opt/dusk/bin/*
+
+# Set permissions
+RUN chown -R dusk:dusk /opt/dusk /var/log/dusk /home/dusk/.dusk && \
+    chmod -R 755 /opt/dusk && \
+    chmod 644 /var/log/rusk.log
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
     chown dusk:dusk /usr/local/bin/entrypoint.sh
 
-# Debug info
-RUN ls -la /opt/dusk/bin/ && \
-    ls -la /usr/bin/rusk* && \
-    ls -la /opt/dusk/services && \
-    echo "PATH=$PATH" && \
-    which rusk-wallet
-
-# Switch to non-root user
+# Switch back to dusk user
 USER dusk
 WORKDIR /opt/dusk
 

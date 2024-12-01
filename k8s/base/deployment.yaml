@@ -14,15 +14,32 @@ spec:
         app: dusk-node
     spec:
       initContainers:
-        - name: copy-binaries
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.2
-          command: ['sh', '-c', 'cp -r /opt/dusk/bin/* /dusk-bin/ && chmod -R 755 /dusk-bin/']
+        - name: setup-dusk
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.3
+          command:
+            - sh
+            - -c
+            - |
+              cp -r /opt/dusk/bin/* /dusk-bin/ && \
+              chown -R 1000:1000 /dusk-bin/ && \
+              mkdir -p /home/dusk/.dusk/rusk-wallet && \
+              chown -R 1000:1000 /home/dusk/ && \
+              mkdir -p /opt/dusk/services && \
+              cp /opt/dusk/services/rusk.service /etc/systemd/system/ && \
+              chown -R 1000:1000 /opt/dusk/services
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
           volumeMounts:
             - name: dusk-bin
               mountPath: /dusk-bin
+            - name: dusk-home
+              mountPath: /home/dusk
+            - name: systemd
+              mountPath: /etc/systemd/system
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.4
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.3
           imagePullPolicy: Always
           volumeMounts:
             - name: dusk-bin
@@ -31,12 +48,21 @@ spec:
               mountPath: /opt/dusk/state
             - name: dusk-conf
               mountPath: /opt/dusk/conf
+            - name: dusk-home
+              mountPath: /home/dusk
+            - name: systemd
+              mountPath: /etc/systemd/system
             - name: secrets
               mountPath: /config
               readOnly: true
           env:
             - name: PATH
               value: /opt/dusk/bin:/usr/bin:/usr/local/bin:/sbin:/bin
+            - name: HOME
+              value: /home/dusk
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
       volumes:
         - name: dusk-bin
           emptyDir: {}
@@ -44,6 +70,11 @@ spec:
           persistentVolumeClaim:
             claimName: dusk-state
         - name: dusk-conf
+          emptyDir: {}
+        - name: dusk-home
+          persistentVolumeClaim:
+            claimName: dusk-wallet
+        - name: systemd
           emptyDir: {}
         - name: secrets
           secret:

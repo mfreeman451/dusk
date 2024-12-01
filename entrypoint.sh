@@ -9,20 +9,24 @@ handle_error() {
 
 # Debug info
 echo "PATH=$PATH"
+echo "HOME=$HOME"
+echo "PWD=$(pwd)"
+echo "USER=$(whoami)"
 echo "Checking rusk-wallet location:"
-which rusk-wallet || echo "rusk-wallet not in PATH"
-ls -la /opt/dusk/bin/rusk-wallet || echo "rusk-wallet not in /opt/dusk/bin"
-ls -la /usr/bin/rusk-wallet || echo "rusk-wallet not in /usr/bin"
+which rusk-wallet
+ls -la $(which rusk-wallet)
+ls -la /usr/bin/rusk-wallet
 
 # Setup wallet if mnemonic exists
 if [ -f "/config/mnemonic" ]; then
     echo "Restoring wallet from mnemonic..."
+    mkdir -p $HOME/.dusk/rusk-wallet
     WALLET_PASSWORD=$(cat /config/wallet-password)
     {
         cat /config/mnemonic
         echo "${WALLET_PASSWORD}"
         echo "${WALLET_PASSWORD}"
-    } | /opt/dusk/bin/rusk-wallet restore || handle_error "Failed to restore wallet"
+    } | rusk-wallet restore || handle_error "Failed to restore wallet"
     echo "Wallet restored successfully"
 fi
 
@@ -34,7 +38,7 @@ if [ -f "/config/consensus-key-password" ]; then
         echo "${WALLET_PASSWORD}"        # Wallet password needed for export
         echo "${CONSENSUS_KEY_PASSWORD}" # New password for consensus key
         echo "${CONSENSUS_KEY_PASSWORD}" # Confirm new password
-    } | /opt/dusk/bin/rusk-wallet export -d /opt/dusk/conf -n consensus.keys || handle_error "Failed to export consensus keys"
+    } | rusk-wallet export -d /opt/dusk/conf -n consensus.keys || handle_error "Failed to export consensus keys"
     echo "Consensus keys exported successfully"
 
     # Set up consensus password as environment variable
@@ -43,9 +47,15 @@ if [ -f "/config/consensus-key-password" ]; then
     echo "Consensus password environment variable set successfully"
 fi
 
-# Start Rusk service
+# Start Rusk service with systemctl if possible, otherwise direct
 echo "Starting Rusk service..."
-sudo service rusk start
+if command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl daemon-reload
+    sudo systemctl start rusk
+else
+    echo "Starting rusk directly..."
+    /opt/dusk/bin/rusk &
+fi
 
 # Keep container running and output logs
 exec tail -f /var/log/rusk.log

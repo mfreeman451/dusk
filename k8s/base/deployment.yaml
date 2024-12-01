@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dusk-node
+  namespace: dusk
 spec:
   replicas: 1
   selector:
@@ -12,16 +13,25 @@ spec:
       labels:
         app: dusk-node
     spec:
+      initContainers:
+        - name: copy-binaries
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.2
+          command: ['sh', '-c', 'cp -r /opt/dusk/bin/* /dusk-bin/ && chmod -R 755 /dusk-bin/']
+          volumeMounts:
+            - name: dusk-bin
+              mountPath: /dusk-bin
       containers:
         - name: dusk-node
           image: ghcr.io/mfreeman451/dusk-node:v0.0.4
           imagePullPolicy: Always
           volumeMounts:
             - name: dusk-bin
-              mountPath: /opt/dusk
-            - name: dusk-config
+              mountPath: /opt/dusk/bin
+            - name: dusk-state
+              mountPath: /opt/dusk/state
+            - name: dusk-conf
               mountPath: /opt/dusk/conf
-            - name: dusk-wallet-secret
+            - name: secrets
               mountPath: /config
               readOnly: true
           env:
@@ -29,11 +39,12 @@ spec:
               value: /opt/dusk/bin:/usr/bin:/usr/local/bin:/sbin:/bin
       volumes:
         - name: dusk-bin
+          emptyDir: {}
+        - name: dusk-state
           persistentVolumeClaim:
-            claimName: dusk-bin-data
-        - name: dusk-config
-          persistentVolumeClaim:
-            claimName: dusk-config
-        - name: dusk-wallet-secret
+            claimName: dusk-state
+        - name: dusk-conf
+          emptyDir: {}
+        - name: secrets
           secret:
-            secretName: dusk-wallet-secret
+            secretName: dusk-node-secret

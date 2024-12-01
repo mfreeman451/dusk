@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dusk-node-config
+  namespace: dusk
 data:
   config.env: |
     # Dusk node configuration

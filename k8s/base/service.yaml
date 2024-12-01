@@ -3,6 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: dusk-node
+  namespace: dusk
 spec:
   selector:
     app: dusk-node

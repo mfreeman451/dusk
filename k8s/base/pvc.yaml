@@ -1,25 +1,38 @@
-# PersistentVolumeClaim for DUSK node data
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: dusk-node-data
+  namespace: dusk
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 100Gi
   storageClassName: local-path
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: dusk-config
-  namespace: default
+  namespace: dusk
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dusk-state
+  namespace: dusk
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
   storageClassName: local-path

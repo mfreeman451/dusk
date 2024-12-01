@@ -16,7 +16,7 @@ spec:
         fsGroup: 10001  # dusk user
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.1
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.2
           imagePullPolicy: Always
           envFrom:
             - configMapRef:

@@ -16,7 +16,7 @@ spec:
       containers:
         - name: dusk-node
           image: dusknetwork/node:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               name: api
@@ -31,15 +31,13 @@ spec:
               mountPath: /config
               readOnly: true
           env:
-            - name: PATH
-              value: /opt/dusk/bin:/usr/bin:/usr/local/bin:/sbin:/bin
-            - name: HOME
-              value: /home/dusk
+            - name: DUSK_NETWORK
+              value: "testnet"
+            - name: LOG_LEVEL
+              value: "info"
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-          command: ["/opt/dusk/bin/rusk"]  # Override the default command
-          args: ["-c", "/opt/dusk/conf/config.toml"]  # Specify the config file
       volumes:
         - name: dusk-data
           persistentVolumeClaim:

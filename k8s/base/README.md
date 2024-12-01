@@ -1,5 +1,13 @@
 # dusk network k8s - kustomize base
 
+## Namespace
+
+Create a 'dusk' namespace first
+
+```shell
+kubectl create namespace dusk
+```
+
 ## Secrets
 
 This may or may not appear in the repository as a file, so it is documented here.
@@ -38,3 +46,9 @@ kubectl create secret generic dusk-node-secret \
   --from-file=consensus-password
 ```
 
+## Applying manifests using Kustomize
+
+```shell
+cd k8s/
+kubectl apply -k base/
+```

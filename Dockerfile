@@ -7,14 +7,16 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+COPY rusk.toml /opt/dusk/conf/rusk.toml
+
 RUN mkdir -p /opt/dusk/bin && \
     mkdir -p /opt/dusk/conf && \
     mkdir -p /opt/dusk/rusk && \
     mkdir -p /opt/dusk/services && \
-    mkdir -p ~/.dusk/rusk-wallet && \
+    mkdir -p /home/dusk/.dusk/rusk-wallet && \
     mkdir -p /opt/dusk/rusk/state && \
     cp /opt/rusk/rusk /opt/dusk/bin/ && \
-    cp /opt/rusk/state.toml /opt/dusk/conf/rusk.toml
+    touch /opt/dusk/rusk/state/genesis.state
 
 RUN cd /tmp && \
     curl -so rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys" && \
@@ -22,13 +24,16 @@ RUN cd /tmp && \
     mv /opt/dusk/rusk/devnet-piecrust.crs /opt/dusk/rusk/dev-piecrust.crs && \
     rm rusk-vd-keys.zip
 
-RUN chown -R 1000:1000 /opt/dusk ~/.dusk && \
+RUN chown -R 1000:1000 /opt/dusk /home/dusk/.dusk && \
     chmod -R 755 /opt/dusk/bin/* && \
     chmod 600 /opt/dusk/rusk/dev-piecrust.crs && \
     ln -sf /opt/dusk/bin/rusk /usr/bin/rusk
 
 WORKDIR /opt/dusk/bin
 USER 1000:1000
+
+ENV RUSK_STATE_PATH=/opt/dusk/rusk/state \
+    RUSK_DB_PATH=/opt/dusk/rusk/chain.db
 
 ENTRYPOINT ["./rusk"]
 CMD ["--network-id", "2", "--kadcast-bootstrap", "188.166.70.129:9000,139.59.146.237:9000"]

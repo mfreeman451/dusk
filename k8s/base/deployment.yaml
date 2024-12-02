@@ -15,56 +15,14 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-io-cred
-      initContainers:
-        - name: init-config
-          image: dusknetwork/node:latest
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              set -ex
-              # Create directories like installer
-              mkdir -p /opt/dusk/bin /opt/dusk/conf /opt/dusk/rusk /opt/dusk/services ~/.dusk/rusk-wallet
-
-              # Copy base files
-              cp /opt/rusk/rusk /opt/dusk/bin/
-              cp /opt/rusk/state.toml /opt/dusk/conf/rusk.toml
-
-              # Create empty state file
-              mkdir -p /opt/dusk/rusk/state
-              touch /opt/dusk/rusk/state/empty.state
-
-              # Download verifier keys
-              cd /tmp
-              curl -so rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys"
-              unzip -o rusk-vd-keys.zip -d /opt/dusk/rusk/
-
-              # Move dev-piecrust.crs to proper location
-              mv /opt/dusk/rusk/devnet-piecrust.crs /opt/dusk/rusk/dev-piecrust.crs
-
-              # Set proper ownership
-              chown -R 1000:1000 /opt/dusk ~/.dusk
-              chmod -R 755 /opt/dusk/bin/*
-              chmod 600 /opt/dusk/rusk/dev-piecrust.crs
-
-              # Create symlinks
-              ln -sf /opt/dusk/bin/rusk /usr/bin/rusk
-          securityContext:
-            runAsUser: 0
-          volumeMounts:
-            - name: dusk-data
-              mountPath: /opt/dusk
-            - name: dusk-wallet
-              mountPath: /home/dusk/.dusk
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
       containers:
         - name: dusk-node
-          image: dusknetwork/node:latest
-          workingDir: /opt/dusk/bin
-          command: ["./rusk"]
-          args:
-            - "--kadcast-bootstrap"
-            - "188.166.70.129:9000,139.59.146.237:9000"
-            - "--network-id"
-            - "2"
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.14
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -84,6 +42,13 @@ spec:
               value: "1"
             - name: HOME
               value: "/home/dusk"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
       volumes:
         - name: dusk-data
           persistentVolumeClaim:

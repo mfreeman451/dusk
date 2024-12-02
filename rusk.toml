@@ -1,0 +1,12 @@
+network = "testnet"
+state_path = "/opt/dusk/rusk/state"
+chain_path = "/opt/dusk/rusk/chain.db"
+consensus_keys_path = "/opt/dusk/conf/consensus.keys"
+rusk_ipc_address = "0.0.0.0:8080"
+kadcast_id = "2"
+kadcast_public_address = "0.0.0.0:9000"
+kadcast_listen_address = "0.0.0.0:9000"
+kadcast_bootstrap = true
+bootstrapping_nodes = ["188.166.70.129:9000", "139.59.146.237:9000"]
+log_level = "info"
+genesis_timestamp = "2024-10-22T08:00:00Z"

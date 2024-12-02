@@ -35,7 +35,7 @@ spec:
               mountPath: /opt/dusk
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.16
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.17
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

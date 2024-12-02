@@ -9,13 +9,16 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
+# Create dusk user and group
+RUN useradd -r -m dusk
+
 # Create necessary directories
 RUN mkdir -p /opt/dusk/bin \
     /opt/dusk/conf \
     /opt/dusk/rusk \
     /opt/dusk/services \
     /opt/dusk/installer \
-    /root/.dusk/rusk-wallet
+    /home/dusk/.dusk/rusk-wallet
 
 # Download and extract installer package
 RUN curl -so /opt/dusk/installer/installer.tar.gz -L "https://github.com/dusk-network/node-installer/tarball/main" && \
@@ -23,7 +26,7 @@ RUN curl -so /opt/dusk/installer/installer.tar.gz -L "https://github.com/dusk-ne
     mv -f /opt/dusk/installer/bin/* /opt/dusk/bin/ && \
     mv /opt/dusk/installer/conf/* /opt/dusk/conf/ && \
     mv -n /opt/dusk/installer/services/* /opt/dusk/services/ && \
-    mv -f /opt/dusk/conf/wallet.toml /root/.dusk/rusk-wallet/config.toml
+    mv -f /opt/dusk/conf/wallet.toml /home/dusk/.dusk/rusk-wallet/config.toml
 
 # Download verifier keys
 RUN curl -so /opt/dusk/installer/rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys" && \
@@ -35,5 +38,10 @@ RUN chmod +x /opt/dusk/bin/* && \
     chown -R dusk:dusk /home/dusk/.dusk && \
     rm -rf /opt/dusk/installer
 
-USER 1000:1000
+# Configure network for testnet
+RUN sed -i "s/^kadcast_id =.*/kadcast_id = 0x2/" /opt/dusk/conf/rusk.toml && \
+    sed -i "s/^bootstrapping_nodes =.*/bootstrapping_nodes = ['188.166.70.129:9000','139.59.146.237:9000']/" /opt/dusk/conf/rusk.toml && \
+    sed -i "s/^genesis_timestamp =.*/genesis_timestamp = '2024-10-22T08:00:00Z'/" /opt/dusk/conf/rusk.toml
+
+USER dusk
 WORKDIR /opt/dusk

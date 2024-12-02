@@ -16,4 +16,5 @@ RUN curl --proto '=https' --tlsv1.2 -sSfL https://github.com/dusk-network/node-i
 EXPOSE 8080 9000
 
 # Set entrypoint
-ENTRYPOINT ["service", "rusk", "start"]
+#ENTRYPOINT ["service", "rusk", "start"]
+ENTRYPOINT ["/opt/dusk/bin/rusk"]

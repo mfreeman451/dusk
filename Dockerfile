@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     git \
+    pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust
@@ -18,6 +20,7 @@ WORKDIR /tmp
 RUN git clone https://github.com/dusk-network/rusk.git && \
     cd rusk && \
     RUSTFLAGS='-C target-cpu=x86-64' \
+    PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig" \
     cargo build --release --bin rusk-wallet --target x86_64-unknown-linux-gnu && \
     mv target/x86_64-unknown-linux-gnu/release/rusk-wallet /opt/dusk/bin/ && \
     chmod +x /opt/dusk/bin/rusk-wallet && \

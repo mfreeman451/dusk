@@ -19,9 +19,23 @@ spec:
         fsGroup: 1000
         runAsUser: 1000
         runAsGroup: 1000
+      initContainers:
+        - name: init-state
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.14
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /opt/dusk/rusk/state
+              mkdir -p /opt/dusk/rusk/keys
+              mkdir -p /opt/dusk/rusk/circuits
+              touch /opt/dusk/rusk/state/genesis.state
+              chown -R 1000:1000 /opt/dusk
+          volumeMounts:
+            - name: dusk-data
+              mountPath: /opt/dusk
       containers:
         - name: dusk-node
-          image: ghcr.io/mfreeman451/dusk-node:v0.0.14
+          image: ghcr.io/mfreeman451/dusk-node:v0.0.15
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

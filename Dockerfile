@@ -7,7 +7,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/dusk/{bin,conf,rusk,services} ~/.dusk/rusk-wallet && \
+RUN mkdir -p /opt/dusk/bin && \
+    mkdir -p /opt/dusk/conf && \
+    mkdir -p /opt/dusk/rusk && \
+    mkdir -p /opt/dusk/services && \
+    mkdir -p ~/.dusk/rusk-wallet && \
     mkdir -p /opt/dusk/rusk/state && \
     cp /opt/rusk/rusk /opt/dusk/bin/ && \
     cp /opt/rusk/state.toml /opt/dusk/conf/rusk.toml

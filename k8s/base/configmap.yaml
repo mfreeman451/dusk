@@ -4,6 +4,24 @@ metadata:
   name: dusk-node-config
   namespace: dusk
 data:
+  rusk.toml: |
+    # Network configuration
+    kadcast_id = 0x2  # For testnet
+    bootstrapping_nodes = ['188.166.70.129:9000','139.59.146.237:9000']
+    genesis_timestamp = '2024-10-22T08:00:00Z'
+    
+    # Path configurations
+    consensus_keys_path = '/opt/dusk/conf/consensus.keys'
+    state_path = '/opt/dusk/rusk/state'
+    chain_path = '/opt/dusk/rusk/chain.db'
+    
+    # Log configuration
+    log_level = 'info'
+    
+    wallet.toml: |
+    # Wallet configuration
+    network = 'testnet'
+    rusk_address = '0.0.0.0:8080'
   config.env: |
     # Dusk node configuration
     DUSK_NETWORK=testnet

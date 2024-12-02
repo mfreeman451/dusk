@@ -6,9 +6,11 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/hostname: "dusk.tunnel.threadr.ai"
     metallb.universe.tf/address-pool: k3s-pool
+    metallb.universe.tf/allow-shared-ip: "dusk-shared"
+    metallb.universe.tf/loadBalancerIPs: "10.43.0.8,2001:470:c0b5:5::5"
 spec:
   type: LoadBalancer
-  externalTrafficPolicy: Local
+  externalTrafficPolicy: Cluster
   ipFamilyPolicy: RequireDualStack
   ipFamilies:
     - IPv4
@@ -16,9 +18,11 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
+      protocol: TCP
       name: api
     - port: 9000
       targetPort: 9000
+      protocol: UDP
       name: p2p
   selector:
     app: dusk-node

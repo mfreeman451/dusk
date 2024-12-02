@@ -13,31 +13,65 @@ spec:
       labels:
         app: dusk-node
     spec:
+      initContainers:
+        - name: init-config
+          image: dusknetwork/node:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Setup directories
+              mkdir -p /opt/dusk/conf /opt/dusk/rusk /home/dusk/.dusk/rusk-wallet
+              
+              # Copy consensus keys if they exist
+              if [ -f "/config/consensus.keys" ]; then
+                cp /config/consensus.keys /opt/dusk/conf/
+                chmod 600 /opt/dusk/conf/consensus.keys
+              fi
+              
+              # Setup consensus key password
+              if [ -f "/config/consensus-key-password" ]; then
+                echo "DUSK_CONSENSUS_KEYS_PASS='$(cat /config/consensus-key-password)'" > /opt/dusk/services/dusk.conf
+              fi
+              
+              # Copy config files
+              cp /dusk-config/rusk.toml /opt/dusk/conf/
+              cp /dusk-config/wallet.toml /home/dusk/.dusk/rusk-wallet/config.toml
+              
+              # Set permissions
+              chown -R 1000:1000 /opt/dusk /home/dusk/.dusk
+          volumeMounts:
+            - name: dusk-data
+              mountPath: /opt/dusk
+            - name: dusk-wallet
+              mountPath: /home/dusk/.dusk
+            - name: dusk-config
+              mountPath: /dusk-config
+            - name: secrets
+              mountPath: /config
+              readOnly: true
       containers:
         - name: dusk-node
           image: dusknetwork/node:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+              protocol: TCP
               name: api
             - containerPort: 9000
+              protocol: UDP
               name: p2p
           volumeMounts:
             - name: dusk-data
               mountPath: /opt/dusk
             - name: dusk-wallet
               mountPath: /home/dusk/.dusk
-            - name: secrets
-              mountPath: /config
-              readOnly: true
           env:
             - name: DUSK_NETWORK
               value: "testnet"
             - name: LOG_LEVEL
               value: "info"
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
+            - name: HOME
+              value: "/home/dusk"
       volumes:
         - name: dusk-data
           persistentVolumeClaim:
@@ -45,6 +79,9 @@ spec:
         - name: dusk-wallet
           persistentVolumeClaim:
             claimName: dusk-wallet
+        - name: dusk-config
+          configMap:
+            name: dusk-node-config
         - name: secrets
           secret:
             secretName: dusk-node-secret

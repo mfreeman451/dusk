@@ -13,7 +13,7 @@ RUN apt-get install -y openssl=3.0.*
 RUN curl --proto '=https' --tlsv1.2 -sSfL https://github.com/dusk-network/node-installer/releases/download/v0.3.5/node-installer.sh | sh
 
 # Download and run download_state.sh
-RUN curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/dusk-network/node-installer/main/bin/download_state.sh -o download_state.sh
+#RUN curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/dusk-network/node-installer/main/bin/download_state.sh -o download_state.sh
 RUN chmod +x download_state.sh
 RUN ./download_state.sh
 

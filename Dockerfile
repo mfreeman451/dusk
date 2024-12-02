@@ -1,47 +1,36 @@
-FROM --platform=linux/amd64 dusknetwork/node:latest
+FROM dusknetwork/node:latest
 
 USER root
 
-# Install required dependencies
+# Install required tools
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
-    jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Create dusk user and group
-RUN useradd -r -m dusk
+# Create directories
+RUN mkdir -p /opt/dusk/{bin,conf,rusk,services} ~/.dusk/rusk-wallet && \
+    mkdir -p /opt/dusk/rusk/state
 
-# Create necessary directories
-RUN mkdir -p /opt/dusk/bin \
-    /opt/dusk/conf \
-    /opt/dusk/rusk \
-    /opt/dusk/services \
-    /opt/dusk/installer \
-    /home/dusk/.dusk/rusk-wallet
+# Copy from base image
+COPY --from=0 /opt/rusk/rusk /opt/dusk/bin/
+COPY --from=0 /opt/rusk/state.toml /opt/dusk/conf/rusk.toml
 
-# Download and extract installer package
-RUN curl -so /opt/dusk/installer/installer.tar.gz -L "https://github.com/dusk-network/node-installer/tarball/main" && \
-    tar xf /opt/dusk/installer/installer.tar.gz --strip-components 1 --directory /opt/dusk/installer && \
-    mv -f /opt/dusk/installer/bin/* /opt/dusk/bin/ && \
-    mv /opt/dusk/installer/conf/* /opt/dusk/conf/ && \
-    mv -n /opt/dusk/installer/services/* /opt/dusk/services/ && \
-    mv -f /opt/dusk/conf/wallet.toml /home/dusk/.dusk/rusk-wallet/config.toml
+# Download and setup verifier keys
+RUN cd /tmp && \
+    curl -so rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys" && \
+    unzip -o rusk-vd-keys.zip -d /opt/dusk/rusk/ && \
+    mv /opt/dusk/rusk/devnet-piecrust.crs /opt/dusk/rusk/dev-piecrust.crs && \
+    rm rusk-vd-keys.zip
 
-# Download verifier keys
-RUN curl -so /opt/dusk/installer/rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys" && \
-    unzip -d /opt/dusk/rusk/ -o /opt/dusk/installer/rusk-vd-keys.zip
+# Setup permissions
+RUN chown -R 1000:1000 /opt/dusk ~/.dusk && \
+    chmod -R 755 /opt/dusk/bin/* && \
+    chmod 600 /opt/dusk/rusk/dev-piecrust.crs && \
+    ln -sf /opt/dusk/bin/rusk /usr/bin/rusk
 
-# Make everything executable and set permissions
-RUN chmod +x /opt/dusk/bin/* && \
-    chown -R dusk:dusk /opt/dusk && \
-    chown -R dusk:dusk /home/dusk/.dusk && \
-    rm -rf /opt/dusk/installer
+WORKDIR /opt/dusk/bin
+USER 1000:1000
 
-# Configure network for testnet
-RUN sed -i "s/^kadcast_id =.*/kadcast_id = 0x2/" /opt/dusk/conf/rusk.toml && \
-    sed -i "s/^bootstrapping_nodes =.*/bootstrapping_nodes = ['188.166.70.129:9000','139.59.146.237:9000']/" /opt/dusk/conf/rusk.toml && \
-    sed -i "s/^genesis_timestamp =.*/genesis_timestamp = '2024-10-22T08:00:00Z'/" /opt/dusk/conf/rusk.toml
-
-USER dusk
-WORKDIR /opt/dusk
+ENTRYPOINT ["./rusk"]
+CMD ["--network-id", "2", "--kadcast-bootstrap", "188.166.70.129:9000,139.59.146.237:9000"]

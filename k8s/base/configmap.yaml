@@ -5,24 +5,24 @@ metadata:
   namespace: dusk
 data:
   rusk.toml: |
+    network = 'testnet'
     # Network configuration
-    kadcast_id = 0x2  # For testnet
-    bootstrapping_nodes = ['188.166.70.129:9000','139.59.146.237:9000']
-    genesis_timestamp = '2024-10-22T08:00:00Z'
+    kadcast_id = '0x2'
+    kadcast_public_address = '0.0.0.0:9000'
+    kadcast_listen_address = '0.0.0.0:9000'
+    kadcast_bootstrap = true
+    bootstrapping_nodes = ['188.166.70.129:9000', '139.59.146.237:9000']
     
-    # Path configurations
+    # Service configuration
+    rusk_ipc_address = '0.0.0.0:8080'
+    
+    # Consensus keys configuration
     consensus_keys_path = '/opt/dusk/conf/consensus.keys'
-    state_path = '/opt/dusk/rusk/state'
+    
+    # State paths
     chain_path = '/opt/dusk/rusk/chain.db'
+    state_path = '/opt/dusk/rusk/state'
     
     # Log configuration
     log_level = 'info'
-    
-    wallet.toml: |
-    # Wallet configuration
-    network = 'testnet'
-    rusk_address = '0.0.0.0:8080'
-  config.env: |
-    # Dusk node configuration
-    DUSK_NETWORK=testnet
-    LOG_LEVEL=debug
+    genesis_timestamp = '2024-10-22T08:00:00Z'

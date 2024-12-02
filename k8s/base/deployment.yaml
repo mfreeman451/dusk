@@ -13,46 +13,58 @@ spec:
       labels:
         app: dusk-node
     spec:
+      imagePullSecrets:
+        - name: ghcr-io-cred
       initContainers:
         - name: init-config
           image: dusknetwork/node:latest
           command: ["/bin/sh", "-c"]
           args:
             - |
-              # Setup directories
-              mkdir -p /opt/dusk/conf /opt/dusk/rusk /home/dusk/.dusk/rusk-wallet
-              
-              # Copy consensus keys if they exist
-              if [ -f "/config/consensus.keys" ]; then
-                cp /config/consensus.keys /opt/dusk/conf/
-                chmod 600 /opt/dusk/conf/consensus.keys
-              fi
-              
-              # Setup consensus key password
-              if [ -f "/config/consensus-key-password" ]; then
-                echo "DUSK_CONSENSUS_KEYS_PASS='$(cat /config/consensus-key-password)'" > /opt/dusk/services/dusk.conf
-              fi
-              
-              # Copy config files
-              cp /dusk-config/rusk.toml /opt/dusk/conf/
-              cp /dusk-config/wallet.toml /home/dusk/.dusk/rusk-wallet/config.toml
-              
-              # Set permissions
-              chown -R 1000:1000 /opt/dusk /home/dusk/.dusk
+              set -ex
+              # Create directories like installer
+              mkdir -p /opt/dusk/bin /opt/dusk/conf /opt/dusk/rusk /opt/dusk/services ~/.dusk/rusk-wallet
+
+              # Copy base files
+              cp /opt/rusk/rusk /opt/dusk/bin/
+              cp /opt/rusk/state.toml /opt/dusk/conf/rusk.toml
+
+              # Create empty state file
+              mkdir -p /opt/dusk/rusk/state
+              touch /opt/dusk/rusk/state/empty.state
+
+              # Download verifier keys
+              cd /tmp
+              curl -so rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys"
+              unzip -o rusk-vd-keys.zip -d /opt/dusk/rusk/
+
+              # Move dev-piecrust.crs to proper location
+              mv /opt/dusk/rusk/devnet-piecrust.crs /opt/dusk/rusk/dev-piecrust.crs
+
+              # Set proper ownership
+              chown -R 1000:1000 /opt/dusk ~/.dusk
+              chmod -R 755 /opt/dusk/bin/*
+              chmod 600 /opt/dusk/rusk/dev-piecrust.crs
+
+              # Create symlinks
+              ln -sf /opt/dusk/bin/rusk /usr/bin/rusk
+          securityContext:
+            runAsUser: 0
           volumeMounts:
             - name: dusk-data
               mountPath: /opt/dusk
             - name: dusk-wallet
               mountPath: /home/dusk/.dusk
-            - name: dusk-config
-              mountPath: /dusk-config
-            - name: secrets
-              mountPath: /config
-              readOnly: true
       containers:
         - name: dusk-node
           image: dusknetwork/node:latest
-          imagePullPolicy: Always
+          workingDir: /opt/dusk/bin
+          command: ["./rusk"]
+          args:
+            - "--kadcast-bootstrap"
+            - "188.166.70.129:9000,139.59.146.237:9000"
+            - "--network-id"
+            - "2"
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -66,10 +78,10 @@ spec:
             - name: dusk-wallet
               mountPath: /home/dusk/.dusk
           env:
-            - name: DUSK_NETWORK
-              value: "testnet"
             - name: LOG_LEVEL
-              value: "info"
+              value: "debug"
+            - name: RUST_BACKTRACE
+              value: "1"
             - name: HOME
               value: "/home/dusk"
       volumes:
@@ -79,9 +91,3 @@ spec:
         - name: dusk-wallet
           persistentVolumeClaim:
             claimName: dusk-wallet
-        - name: dusk-config
-          configMap:
-            name: dusk-node-config
-        - name: secrets
-          secret:
-            secretName: dusk-node-secret

@@ -4,34 +4,36 @@ USER root
 
 # Install required dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
     curl \
-    git \
-    pkg-config \
-    libssl-dev \
-    wget \
     unzip \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Install specific version of Rust (stable)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-ENV PATH="/root/.cargo/bin:${PATH}"
+# Create necessary directories
+RUN mkdir -p /opt/dusk/bin \
+    /opt/dusk/conf \
+    /opt/dusk/rusk \
+    /opt/dusk/services \
+    /opt/dusk/installer \
+    /root/.dusk/rusk-wallet
 
-WORKDIR /tmp
+# Download and extract installer package
+RUN curl -so /opt/dusk/installer/installer.tar.gz -L "https://github.com/dusk-network/node-installer/tarball/main" && \
+    tar xf /opt/dusk/installer/installer.tar.gz --strip-components 1 --directory /opt/dusk/installer && \
+    mv -f /opt/dusk/installer/bin/* /opt/dusk/bin/ && \
+    mv /opt/dusk/installer/conf/* /opt/dusk/conf/ && \
+    mv -n /opt/dusk/installer/services/* /opt/dusk/services/ && \
+    mv -f /opt/dusk/conf/wallet.toml /root/.dusk/rusk-wallet/config.toml
 
-# Download and extract a specific release version of rusk-wallet
-RUN wget https://github.com/dusk-network/rusk/releases/download/rusk-wallet-0.6.1/rusk-wallet-linux-libssl3.tar.gz && \
-    tar xzf rusk-wallet-linux-libssl3.tar.gz && \
-    mv rusk-wallet /opt/dusk/bin/ && \
-    chmod +x /opt/dusk/bin/rusk-wallet && \
-    rm rusk-wallet-linux-libssl3.tar.gz
+# Download verifier keys
+RUN curl -so /opt/dusk/installer/rusk-vd-keys.zip -L "https://testnet.nodes.dusk.network/keys" && \
+    unzip -d /opt/dusk/rusk/ -o /opt/dusk/installer/rusk-vd-keys.zip
 
-# Create setup_consensus_pwd.sh script
-RUN mkdir -p /opt/dusk/services && \
-    echo '#!/bin/bash\nread pwd\necho "CONSENSUS_KEYS_PASS=$pwd" > /opt/dusk/services/dusk.conf' > /opt/dusk/bin/setup_consensus_pwd.sh && \
-    chmod +x /opt/dusk/bin/setup_consensus_pwd.sh
+# Make everything executable and set permissions
+RUN chmod +x /opt/dusk/bin/* && \
+    chown -R dusk:dusk /opt/dusk && \
+    chown -R dusk:dusk /home/dusk/.dusk && \
+    rm -rf /opt/dusk/installer
 
-# Switch back to dusk user
 USER 1000:1000
-
 WORKDIR /opt/dusk
